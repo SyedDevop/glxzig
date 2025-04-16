@@ -15,7 +15,9 @@ pub fn build(b: *std.Build) void {
         .name = "glxzig",
         .root_module = exe_mod,
     });
-
+    exe.linkLibC();
+    exe.linkSystemLibrary("GL");
+    exe.linkSystemLibrary("X11");
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
