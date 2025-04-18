@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
     });
     exe.linkLibC();
     exe.linkSystemLibrary("GL");
+    exe.linkSystemLibrary("GLU");
     exe.linkSystemLibrary("X11");
     b.installArtifact(exe);
 
