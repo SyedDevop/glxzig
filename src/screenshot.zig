@@ -15,14 +15,12 @@ fn savePixelsAsPPM(pixels: [*]const u32, width: usize, height: usize, filepath: 
     const writer = buff_writer.writer();
     try writer.print("P6\n{} {}\n255\n", .{ width, height });
 
-    for (0..height) |row| {
-        for (0..width) |col| {
-            const pixel = pixels[row * width + col];
-            const c1: u8 = @intCast(pixel & 0xFF);
-            const c2: u8 = @intCast((pixel >> 8) & 0xFF);
-            const c3: u8 = @intCast((pixel >> 16) & 0xFF);
-            try writer.writeAll(&[_]u8{ c3, c2, c1 });
-        }
+    for (0..(width * height)) |i| {
+        const pixel = pixels[i];
+        const c1: u8 = @intCast(pixel & 0xFF);
+        const c2: u8 = @intCast((pixel >> 8) & 0xFF);
+        const c3: u8 = @intCast((pixel >> 16) & 0xFF);
+        try writer.writeAll(&[_]u8{ c3, c2, c1 });
     }
     try buff_writer.flush();
     try file.sync();
