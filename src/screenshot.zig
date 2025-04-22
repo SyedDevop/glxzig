@@ -44,7 +44,7 @@ pub fn main() !void {
         @intCast(attributes.height),
         c.AllPlanes,
         c.ZPixmap,
-    );
+    ) orelse return error.GetImageFailed;
     defer {
         if (img.*.f.destroy_image) |distory| _ = distory(img);
     }
