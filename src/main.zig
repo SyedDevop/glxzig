@@ -15,6 +15,23 @@ var v_attr = [_]c_int{
     glx.None,
 };
 
+const visual_attribs = [_]c_int{
+    glx.GLX_X_RENDERABLE,  glx.True,
+    glx.GLX_DRAWABLE_TYPE, glx.GLX_WINDOW_BIT,
+    glx.GLX_RENDER_TYPE,   glx.GLX_RGBA_BIT,
+    glx.GLX_X_VISUAL_TYPE, glx.GLX_TRUE_COLOR,
+    glx.GLX_RED_SIZE,      8,
+    glx.GLX_GREEN_SIZE,    8,
+    glx.GLX_BLUE_SIZE,     8,
+    glx.GLX_ALPHA_SIZE,    8,
+    glx.GLX_DEPTH_SIZE,    24,
+    glx.GLX_STENCIL_SIZE,  8,
+    glx.GLX_DOUBLEBUFFER,  glx.True,
+    //glx.GLX_SAMPLE_BUFFERS  , 1,
+    //glx.GLX_SAMPLES         , 4,
+    glx.None,
+};
+
 fn drawa_quad() void {
     glx.glClearColor(1.0, 1.0, 1.0, 1.0);
     glx.glClear(glx.GL_COLOR_BUFFER_BIT | glx.GL_DEPTH_BUFFER_BIT);
@@ -42,6 +59,7 @@ fn drawa_quad() void {
 pub fn main() !void {
     const display = x.XOpenDisplay(null) orelse return error.XOpenDisplayFailed;
     const screen = x.XDefaultScreen(display);
+    const root = x.DefaultRootWindow(display);
     var glxMajor: c_int = undefined;
     var glxMinor: c_int = undefined;
 
@@ -52,9 +70,37 @@ pub fn main() !void {
     }
     std.debug.print("{d}::GLX version {d}.{d}\n", .{ glx_ver_ex, glxMajor, glxMinor });
     std.debug.print("GLX Extension: {s}\n\n", .{glx.glXQueryExtensionsString(@ptrCast(display), screen)});
+    var fbcount: c_int = undefined;
 
-    const root = x.DefaultRootWindow(display);
-    const vi = glx.glXChooseVisual(@ptrCast(display), screen, &v_attr) orelse return error.ChooseVisualFailed;
+    const fbc = glx.glXChooseFBConfig(@ptrCast(display), screen, &visual_attribs, &fbcount) orelse return error.FrameBufferConfigFailed;
+    defer _ = x.XFree(@ptrCast(fbc));
+    std.debug.print("Found {d} matching FB configs.\n", .{fbcount});
+    std.debug.print("Getting XVisualInfos\n", .{});
+    var best_fbc: c_int = -1;
+    var worst_fbc: c_int = -1;
+    var best_num_samp: c_int = -1;
+    var worst_num_samp: c_int = 999;
+    for (0..@intCast(fbcount)) |i| {
+        const vi = glx.glXGetVisualFromFBConfig(@ptrCast(display), fbc[i]);
+        defer _ = x.XFree(vi);
+        if (vi != null) {
+            var samp_buf: c_int = undefined;
+            var samples: c_int = undefined;
+            _ = glx.glXGetFBConfigAttrib(@ptrCast(display), fbc[i], glx.GLX_SAMPLE_BUFFERS, &samp_buf);
+            _ = glx.glXGetFBConfigAttrib(@ptrCast(display), fbc[i], glx.GLX_SAMPLES, &samples);
+            if (best_fbc < 0 or samp_buf != 0 and samples > best_num_samp) {
+                best_fbc = @intCast(i);
+                best_num_samp = samples;
+            }
+            if (worst_fbc < 0 or samp_buf == 0 or samples < worst_num_samp) {
+                worst_fbc = @intCast(i);
+                worst_num_samp = samples;
+            }
+        }
+    }
+    const bestfbc = fbc[@intCast(best_fbc)];
+    const vi = glx.glXGetVisualFromFBConfig(@ptrCast(display), bestfbc);
+    defer _ = x.XFree(vi);
     std.debug.print("Visual {d} selected\n", .{vi.*.visualid});
 
     const cmap = x.XCreateColormap(display, root, @ptrCast(vi.*.visual), x.AllocNone);
@@ -81,6 +127,10 @@ pub fn main() !void {
     _ = glx.glXMakeCurrent(@ptrCast(display), win, glc);
     glx.glEnable(glx.GL_DEPTH_TEST);
     glx.glClearColor(1.0, 0.0, 0.0, 1.0);
+
+    std.debug.print("GL Version  {s}\n", .{glx.glGetString(glx.GL_VERSION)});
+    std.debug.print("GL Vender   {s}\n", .{glx.glGetString(glx.GL_VENDOR)});
+    std.debug.print("GL Renderer {s}\n", .{glx.glGetString(glx.GL_RENDERER)});
 
     var xev: x.XEvent = undefined;
     var runing = true;
@@ -114,4 +164,5 @@ pub fn main() !void {
         _ = x.XDestroyWindow(display, win);
         _ = x.XCloseDisplay(display);
     }
+    return;
 }
