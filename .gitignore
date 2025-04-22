@@ -12,5 +12,5 @@ build/
 build-*/
 docgen_tmp/
 screenshot
-screen.ppm
+*.ppm
 screenshot.o
