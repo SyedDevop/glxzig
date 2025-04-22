@@ -1,79 +1,77 @@
 const std = @import("std");
-const glx = @cImport({
+const c = @cImport({
     @cInclude("GL/glx.h");
     @cInclude("GL/glu.h");
-});
-const x = @cImport({
     @cInclude("X11/Xlib.h");
 });
 
 var v_attr = [_]c_int{
-    glx.GLX_RGBA,
-    glx.GLX_DEPTH_SIZE,
+    c.GLX_RGBA,
+    c.GLX_DEPTH_SIZE,
     24,
-    glx.GLX_DOUBLEBUFFER,
-    glx.None,
+    c.GLX_DOUBLEBUFFER,
+    c.None,
 };
 
 const visual_attribs = [_]c_int{
-    glx.GLX_X_RENDERABLE,  glx.True,
-    glx.GLX_DRAWABLE_TYPE, glx.GLX_WINDOW_BIT,
-    glx.GLX_RENDER_TYPE,   glx.GLX_RGBA_BIT,
-    glx.GLX_X_VISUAL_TYPE, glx.GLX_TRUE_COLOR,
-    glx.GLX_RED_SIZE,      8,
-    glx.GLX_GREEN_SIZE,    8,
-    glx.GLX_BLUE_SIZE,     8,
-    glx.GLX_ALPHA_SIZE,    8,
-    glx.GLX_DEPTH_SIZE,    24,
-    glx.GLX_STENCIL_SIZE,  8,
-    glx.GLX_DOUBLEBUFFER,  glx.True,
-    //glx.GLX_SAMPLE_BUFFERS  , 1,
-    //glx.GLX_SAMPLES         , 4,
-    glx.None,
+    c.GLX_X_RENDERABLE,  c.True,
+    c.GLX_DRAWABLE_TYPE, c.GLX_WINDOW_BIT,
+    c.GLX_RENDER_TYPE,   c.GLX_RGBA_BIT,
+    c.GLX_X_VISUAL_TYPE, c.GLX_TRUE_COLOR,
+    c.GLX_RED_SIZE,      8,
+    c.GLX_GREEN_SIZE,    8,
+    c.GLX_BLUE_SIZE,     8,
+    c.GLX_ALPHA_SIZE,    8,
+    c.GLX_DEPTH_SIZE,    24,
+    c.GLX_STENCIL_SIZE,  8,
+    c.GLX_DOUBLEBUFFER,  c.True,
+    //c.GLX_SAMPLE_BUFFERS  , 1,
+    //c.GLX_SAMPLES         , 4,
+    c.None,
 };
 
 fn drawa_quad() void {
-    glx.glClearColor(1.0, 1.0, 1.0, 1.0);
-    glx.glClear(glx.GL_COLOR_BUFFER_BIT | glx.GL_DEPTH_BUFFER_BIT);
+    c.glClearColor(1.0, 1.0, 1.0, 1.0);
+    c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
 
-    glx.glMatrixMode(glx.GL_PROJECTION);
-    glx.glLoadIdentity();
-    glx.glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, 20.0);
+    c.glMatrixMode(c.GL_PROJECTION);
+    c.glLoadIdentity();
+    c.glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, 20.0);
 
-    glx.glMatrixMode(glx.GL_MODELVIEW);
-    glx.glLoadIdentity();
-    glx.gluLookAt(0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    c.glMatrixMode(c.GL_MODELVIEW);
+    c.glLoadIdentity();
+    c.gluLookAt(0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
-    glx.glBegin(glx.GL_QUADS);
-    glx.glColor3f(1.0, 0.0, 0.0);
-    glx.glVertex3f(-0.75, -0.75, 0.0);
-    glx.glColor3f(0.0, 1.0, 0.0);
-    glx.glVertex3f(0.75, -0.75, 0.0);
-    glx.glColor3f(0.0, 0.0, 1.0);
-    glx.glVertex3f(0.75, 0.75, 0.0);
-    glx.glColor3f(1.0, 1.0, 0.0);
-    glx.glVertex3f(-0.75, 0.75, 0.0);
-    glx.glEnd();
+    c.glBegin(c.GL_QUADS);
+    c.glColor3f(1.0, 0.0, 0.0);
+    c.glVertex3f(-0.75, -0.75, 0.0);
+    c.glColor3f(0.0, 1.0, 0.0);
+    c.glVertex3f(0.75, -0.75, 0.0);
+    c.glColor3f(0.0, 0.0, 1.0);
+    c.glVertex3f(0.75, 0.75, 0.0);
+    c.glColor3f(1.0, 1.0, 0.0);
+    c.glVertex3f(-0.75, 0.75, 0.0);
+    c.glEnd();
 }
 
 pub fn main() !void {
-    const display = x.XOpenDisplay(null) orelse return error.XOpenDisplayFailed;
-    const screen = x.XDefaultScreen(display);
-    const root = x.DefaultRootWindow(display);
+    const display = c.XOpenDisplay(null) orelse return error.XOpenDisplayFailed;
+    const screen = c.XDefaultScreen(display);
+    const root = c.DefaultRootWindow(display);
     var glxMajor: c_int = undefined;
     var glxMinor: c_int = undefined;
 
-    const glx_ver_ex = glx.glXQueryVersion(@ptrCast(display), &glxMajor, &glxMinor);
+    const glx_ver_ex = c.glXQueryVersion((display), &glxMajor, &glxMinor);
     if (0 == glx_ver_ex or (glxMajor == 1 and glxMinor < 3) or (glxMajor < 1)) {
         std.debug.print("Incompatible GLX version. Expected >=1.3 Found {}.{}\n", .{ glxMajor, glxMinor });
         return;
     }
     std.debug.print("{d}::GLX version {d}.{d}\n", .{ glx_ver_ex, glxMajor, glxMinor });
-    std.debug.print("GLX Extension: {s}\n\n", .{glx.glXQueryExtensionsString(@ptrCast(display), screen)});
+    std.debug.print("GLX Extension: {s}\n\n", .{c.glXQueryExtensionsString((display), screen)});
     var fbcount: c_int = undefined;
 
-    const fbc = glx.glXChooseFBConfig(@ptrCast(display), screen, &visual_attribs, &fbcount) orelse return error.FrameBufferConfigFailed;
-    defer _ = x.XFree(@ptrCast(fbc));
+    const fbc = c.glXChooseFBConfig((display), screen, &visual_attribs, &fbcount) orelse return error.FrameBufferConfigFailed;
+    defer _ = c.XFree(@ptrCast(fbc));
     std.debug.print("Found {d} matching FB configs.\n", .{fbcount});
     std.debug.print("Getting XVisualInfos\n", .{});
     var best_fbc: c_int = -1;
@@ -81,13 +79,13 @@ pub fn main() !void {
     var best_num_samp: c_int = -1;
     var worst_num_samp: c_int = 999;
     for (0..@intCast(fbcount)) |i| {
-        const vi = glx.glXGetVisualFromFBConfig(@ptrCast(display), fbc[i]);
-        defer _ = x.XFree(vi);
+        const vi = c.glXGetVisualFromFBConfig((display), fbc[i]);
+        defer _ = c.XFree(vi);
         if (vi != null) {
             var samp_buf: c_int = undefined;
             var samples: c_int = undefined;
-            _ = glx.glXGetFBConfigAttrib(@ptrCast(display), fbc[i], glx.GLX_SAMPLE_BUFFERS, &samp_buf);
-            _ = glx.glXGetFBConfigAttrib(@ptrCast(display), fbc[i], glx.GLX_SAMPLES, &samples);
+            _ = c.glXGetFBConfigAttrib((display), fbc[i], c.GLX_SAMPLE_BUFFERS, &samp_buf);
+            _ = c.glXGetFBConfigAttrib((display), fbc[i], c.GLX_SAMPLES, &samples);
             if (best_fbc < 0 or samp_buf != 0 and samples > best_num_samp) {
                 best_fbc = @intCast(i);
                 best_num_samp = samples;
@@ -99,13 +97,13 @@ pub fn main() !void {
         }
     }
     const bestfbc = fbc[@intCast(best_fbc)];
-    const vi = glx.glXGetVisualFromFBConfig(@ptrCast(display), bestfbc);
-    defer _ = x.XFree(vi);
+    const vi = c.glXGetVisualFromFBConfig((display), bestfbc);
+    defer _ = c.XFree(vi);
     std.debug.print("Visual {d} selected\n", .{vi.*.visualid});
 
-    const cmap = x.XCreateColormap(display, root, @ptrCast(vi.*.visual), x.AllocNone);
-    var swap: x.XSetWindowAttributes = .{ .colormap = cmap, .event_mask = x.ExposureMask | x.KeyPressMask };
-    const win = x.XCreateWindow(
+    const cmap = c.XCreateColormap(display, root, (vi.*.visual), c.AllocNone);
+    var swap: c.XSetWindowAttributes = .{ .colormap = cmap, .event_mask = c.ExposureMask | c.KeyPressMask };
+    const win = c.XCreateWindow(
         display,
         root,
         0,
@@ -114,55 +112,58 @@ pub fn main() !void {
         600,
         0,
         vi.*.depth,
-        x.InputOutput,
-        @ptrCast(vi.*.visual),
-        x.CWColormap | x.CWEventMask,
+        c.InputOutput,
+        (vi.*.visual),
+        c.CWColormap | c.CWEventMask,
         &swap,
     );
-    _ = x.XMapWindow(display, win);
-    var wmDeleteMess = x.XInternAtom(display, "WM_DELETE_WINDOW", 0);
-    _ = x.XSetWMProtocols(display, win, &wmDeleteMess, 1);
-    _ = x.XStoreName(display, win, "Hello Dirrrr");
-    const glc = glx.glXCreateContext(@ptrCast(display), vi, null, glx.GL_TRUE);
-    _ = glx.glXMakeCurrent(@ptrCast(display), win, glc);
-    glx.glEnable(glx.GL_DEPTH_TEST);
-    glx.glClearColor(1.0, 0.0, 0.0, 1.0);
+    _ = c.XMapWindow(display, win);
+    var wmDeleteMess = c.XInternAtom(display, "WM_DELETE_WINDOW", 0);
+    _ = c.XSetWMProtocols(display, win, &wmDeleteMess, 1);
+    _ = c.XStoreName(display, win, "Hello Dirrrr");
+    const glc = c.glXCreateContext((display), vi, null, c.GL_TRUE);
+    _ = c.glXMakeCurrent((display), win, glc);
 
-    std.debug.print("GL Version  {s}\n", .{glx.glGetString(glx.GL_VERSION)});
-    std.debug.print("GL Vender   {s}\n", .{glx.glGetString(glx.GL_VENDOR)});
-    std.debug.print("GL Renderer {s}\n", .{glx.glGetString(glx.GL_RENDERER)});
+    c.glEnable(c.GL_DEPTH_TEST);
+    c.glEnable(c.GL_DEBUG_OUTPUT);
 
-    var xev: x.XEvent = undefined;
+    c.glClearColor(1.0, 0.0, 0.0, 1.0);
+
+    std.debug.print("GL Version  {s}\n", .{c.glGetString(c.GL_VERSION)});
+    std.debug.print("GL Vender   {s}\n", .{c.glGetString(c.GL_VENDOR)});
+    std.debug.print("GL Renderer {s}\n", .{c.glGetString(c.GL_RENDERER)});
+
+    var xev: c.XEvent = undefined;
     var runing = true;
     while (runing) {
-        var gwa: x.XWindowAttributes = undefined;
-        _ = x.XGetWindowAttributes(display, win, &gwa);
-        glx.glViewport(0, 0, gwa.width, gwa.height);
-        glx.glClear(glx.GL_COLOR_BUFFER_BIT);
+        var gwa: c.XWindowAttributes = undefined;
+        _ = c.XGetWindowAttributes(display, win, &gwa);
+        c.glViewport(0, 0, gwa.width, gwa.height);
+        c.glClear(c.GL_COLOR_BUFFER_BIT);
 
-        glx.glMatrixMode(glx.GL_PROJECTION);
-        glx.glLoadIdentity();
-        glx.glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, 20.0);
+        c.glMatrixMode(c.GL_PROJECTION);
+        c.glLoadIdentity();
+        c.glOrtho(-1.0, 1.0, -1.0, 1.0, 1.0, 20.0);
 
         drawa_quad();
 
-        glx.glXSwapBuffers(@ptrCast(display), win);
-        _ = x.XNextEvent(display, &xev);
+        c.glXSwapBuffers((display), win);
+        _ = c.XNextEvent(display, &xev);
 
         switch (xev.type) {
-            x.Expose => {},
-            x.KeyPress => runing = false,
-            x.ClientMessage => {
+            c.Expose => {},
+            c.KeyPress => runing = false,
+            c.ClientMessage => {
                 runing = !(xev.xclient.data.l[0] == wmDeleteMess);
             },
             else => {},
         }
     }
     if (!runing) {
-        _ = glx.glXMakeCurrent(@ptrCast(display), x.None, null);
-        glx.glXDestroyContext(@ptrCast(display), glc);
-        _ = x.XDestroyWindow(display, win);
-        _ = x.XCloseDisplay(display);
+        _ = c.glXMakeCurrent((display), c.None, null);
+        c.glXDestroyContext((display), glc);
+        _ = c.XDestroyWindow(display, win);
+        _ = c.XCloseDisplay(display);
     }
     return;
 }
