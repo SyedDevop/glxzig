@@ -13,3 +13,4 @@ build-*/
 docgen_tmp/
 screenshot
 screen.ppm
+screenshot.o
